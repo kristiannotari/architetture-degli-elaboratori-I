@@ -55,22 +55,44 @@ Il clock permette di incrementare dinamicamente un contatore interno che varia d
 
 ### Circuito di disegno
 ![alt text](risorse/m_drawer.png)<br>
-Il circuito di disegno fa corrispondere ogni y e x date a dei valori ad 1 da inserire nella matrice led in input, così da produrre il risultato visivo, ovvero il grafico voluto. Inoltre gestisce il grafico salvato in memoria già in un formato fornibile in input alla matrice e coordina il circuito di merging dei due grafici, eseguendo l'operazione selezionata.<br>
-In ingresso riceve la x e la y attuali, il segnale di un possibile overflow della y (come detto in precedenza), i segnali di gestione reset, salva, cancella, oltre all'operazione da effettuare su i due grafici eventuali.<br>
+Il circuito di disegno fa corrispondere ogni y e x date a delle configurazioni da 32 bit da inserire nella matrice led in input di cui i bit ad 1 corrispondono alla posizione di un led da accendere, così da produrre il risultato visivo, ovvero il grafico voluto. Inoltre gestisce il grafico salvato in memoria già in un formato fornibile in input alla matrice e coordina il circuito di merging dei due grafici, eseguendo l'operazione selezionata.<br>
+In ingresso riceve la x e la y attuali, il segnale di un possibile overflow della y (come detto in precedenza), il segnale di clock, i segnali di gestione reset, salva, cancella, oltre al codice dell'operazione da effettuare su i due grafici eventuali.<br>
 In uscita inoltra le 32 configurazioni di led accesi/spenti alla matrice led.<br>
 E' formato da 3 componenti principali: il circuito che si occupa di trasformare e salvare in configurazioni disegnabili (fornibili alla matrice led) la y derivata dal circuito calcolatore, quello che salva le configurazioni così ottenute in una memoria specifica e quello che riceve entrambe le configurazioni (salvata e attuale) per poterle unire nelle 32 configurazioni finali, a seconda dell'operazione scelta.
 
-- il primo trasforma e salva in configurazioni disegnabili le 32 possibili y in 32 registri (associati alle x da 0 a 31) data la y e la x attuali in numero. Attraverso un decoder decodifica il numero in una configurazione da 32 bit di cui è a 1 il bit corrispondente alla posizione indicata dal numero, che corrisponderà al led da accendere nella matrice e la salva nel registro associato alla x attuale. Qualora si presentasse un overflow, il numero decodificato viene portato con tutti i bit a 0 prima di essere salvato nei registri per indicare la non presenza del grafico in quel punto.
+- il primo trasforma e salva in configurazioni disegnabili le 32 possibili y in 32 registri (associati alle x da 0 a 31, con il comando di scrittura nei registri che è soggetto, oltre alla x corretta anche al clock, così da modificare il grafico rappresentato solo quando il circuito è in funzione) data la y e la x attuali in numero. Attraverso un decoder decodifica il numero in una configurazione da 32 bit di cui è a 1 il bit corrispondente alla posizione indicata dal numero, che corrisponderà al led da accendere nella matrice e la salva nel registro associato alla x attuale. Qualora si presentasse un overflow, il numero decodificato viene portato con tutti i bit a 0 prima di essere salvato nei registri per indicare la non presenza del grafico in quel punto.
 - il secondo è una normale memoria da 32 bit ciascun elemento che al comando di salva memorizza le configurazioni uscenti dal primo circuito che le ha calcolate.
 - il terzo ottiene le coppie di configurazioni in base alla x (x0 con x0, e così via) dalla memoria (il secondo circuito) e dal primo, e le unisce in un'unica configurazione a seconda del codice di operazione in input. Elabora 3 diversi schemi di configurazione: doppio grafico, addizione e sottrazione. Nel primo caso mette semplicemente in or le coppie di configurazione ottendendo così due grafici risultanti. Nel secondo caso e nel terzo caso codifica ogni coppia di configurazione nel suo numero originale (la y non decodificata) e ne esegue la somma o la sottrazione per poi ridecodificare il risultato così da avere uno schema di 32 configurazioni. *Siccome qualora non vi siano bit a 1 in una delle due configurazioni in ingresso della coppia la codifica in numero non produce un risultato numerico, vi è un segnale di controllo "floating" che porta qualsiasi sia il risultato delle operazioni, la configurazione finale tutta con bit a 0. ~~Inoltre la sottrazione di due zeri porta il componente di logisim della sottrazione a dare un risultato floating, perciò vi è un altro segnale di controllo "zero_zero" che fa si che in output vada una configurazione con un 1 finale, che corrisponde al numero zero.~~ Questo "errore" di logisim è scomparso a progetto completato perciò è ancora presente il suddetto controllo sebbene non necessario, perchè credo testimoni una soluzione ad un problema che potrebbe essere comune/ripetersi.*
 
 ## Circuito principale
-@@@@@@@@@@@@@@@@@@@@<br>COME FAR ANDARE AVANTI IL CONTATORE DELLE X (CON CLOCK) COSI' E' DINAMICO E SI AGGIORNA SEMPRE CON ALTA FREQUENZA<br>@@@@@@@@@@@@@@@@@@@@
-<br>GESTIONE OVERFLOW PERCHE NON POSSO RAPPRESENTARE NUMERI OLTRE 0...31 PER LE Y<br>@@@@@@@@@@@@@@@@@@@@
-<br> SICCOME AVREI DOVUTO SALVARE ANCHE L'OVERFLOW DEL NUMERO DA SALVARE, O PREFERITO SALVARLO IN RAPPRESENTAZIONE GRAFICA -> DA CUI TUTTA GESTIONE DEL MERGING<br>@@@@@@@@@@@@@@@@@@@@
-<br>SCELTO UN CONTATORE PERCHE OGNI VOLTA CALCOLARE OGNY Y PER OGNI X AVREBBE RICHIESTO UN CIRCUITO LUNGO E COMPLESSO SENZA SENSO QUANDO POSSO AGGIORNARE DINAMICAMENTE<br>@@@@@@@@@@@@@@@@@@@@
+![alt text](risorse/m_main.png)<br>
+
+| Legenda | Circuiti                  |
+| ------: | :------------------------ |
+| rosso   | gestore input             |
+| verde   | gestore memoria           |
+| blu     | circuito di calcolo       |
+| giallo  | circuito di disegno       |
+| rosa    | circuiti di output visivo |
+
+Il circuito completo è composto da 4 circuiti principali, 2 secondari, 1 clock, un insieme di pulsanti che formano i metodi di input (tastierino e controlli) e 4 output, di cui il primario è la matrice led rappresentante gli elementi desiderati, mentre gli altri 3 sono il visualizzatore dei coefficienti e i selettori di operazione e coefficiente svolgono ruoli minori.
+
+Il gestore di input riceve tutti i segnali che l'utente può fornire, inoltrandoli al resto del circuito o trasformandoli per renderli in una forma elaborabile.
+> I vari pulsanti di input hanno colori differenti per la differente funzione che offrono. Quello rosso di reset del circuito, quelli bianchi per la gestione dell'inserimento di coefficienti, quelli gialli per l'azzeramento degli stessi o l'annullamento dell'ultima operazione, quelli verdi gestiscono il grafico salvato e quello blu l'operazione da eseguire sui due grafici presenti nel circuito. 
+
+Il gestore di input e della memoria si interfacciano inoltre con i circuiti che controllano l'output visivo secondario, visualizzando i dati attuali del circuito.
+
+Il circuito di calcolo e quello di disegno sono gli unici ad usufruire del segnale di clock, in quanto è la parte dinamica del circuito. Il clock è necessario per scorrere tutte le possibili x (0..31) e al rapido aggiornarsi del grafico in output date le modifiche dei coefficienti in input.
+> Il clock è come detto in precedenza sfruttato per far si che le nuove configurazioni pronte ad essere immesse nella matrice led siano salvate solo (oltre ad essere selezionato il registro attraverso il corretto numero dato dalla x corrente) quando il segnale del clock è a 1, ovvero il circuito ha un clock attivo. Questo permette sia di avere una situazione iniziale priva della prima y disegnata (a 0 dati i coefficienti nulli) sia che il circuito di disegno può essere "congelato" tramite la disattivazione del clock.
+
+Il circuito di disegno è l'unico ad interfacciarsi con la matrice led, in quanto, ricevuti dal resto del circuito la x e la y e gli altri segnali di controllo, è il solo che ha il compito di trasformare il tutto in configurazioni disegnabili.
 
 
 ## Interazione tra sottocircuiti
+<br>GESTIONE OVERFLOW PERCHE NON POSSO RAPPRESENTARE NUMERI OLTRE 0...31 PER LE Y<br>@@@@@@@@@@@@@@@@@@@@
+
 
 ## Considerazioni / possibili estensioni o modifiche
+<br> SICCOME AVREI DOVUTO SALVARE ANCHE L'OVERFLOW DEL NUMERO DA SALVARE, O PREFERITO SALVARLO IN RAPPRESENTAZIONE GRAFICA -> DA CUI TUTTA GESTIONE DEL MERGING<br>@@@@@@@@@@@@@@@@@@@@
+<br>SCELTO UN CONTATORE PERCHE OGNI VOLTA CALCOLARE OGNY Y PER OGNI X AVREBBE RICHIESTO UN CIRCUITO LUNGO E COMPLESSO SENZA SENSO QUANDO POSSO AGGIORNARE DINAMICAMENTE<br>@@@@@@@@@@@@@@@@@@@@
+<br>SCELTO DI USARE CLOCK NEL CIRCUITO DI DISGENO COS^ DISEGNA SOLO QUANDO IL CLOCK E' STATO ATTIVATO; come è giust oche sia<br>@@@@@@@@@@@@@@@@@@@@
