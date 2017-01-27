@@ -27,6 +27,7 @@ L'utente dovrà impostare i coefficienti del polinomio attraverso il tastierino 
 <br><br><br>
 <br><br><br>
 <br><br><br>
+<br><br><br>
 
 ## Sottocircuiti implementati
 
