@@ -24,6 +24,8 @@ Il circuito non è dotato di situazioni iniziali o finali pertanto avrà semplic
 ### Ciclo tipico di utilizzo descritto in termini di componenti di input/output
 L'utente dovrà impostare i coefficienti del polinomio attraverso il tastierino numerico per poi visualizzare l'output sulla matrice di led. Se vorrà, in qualsiasi momento, potrà scegliere quale coefficiente modificare e se resettare il plotter allo stato iniziale o meno, oltre ad effettuare le operazioni sopracitate.
 
+<br><br><br>
+
 ## Sottocircuiti implementati
 
 ### Gestore input
