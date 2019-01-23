@@ -1,4 +1,7 @@
-# Progetto Architetture degli Elaboratori
+# Progetto Architetture degli Elaboratori I
+
+Repository per il progetto universitario di Architetture degli Elaboratori I.
+Progettazione di un rappresentatore grafico di polinomi (x^2 + x + q) attraverso l'uso del software [Logisim](http://www.cburch.com/logisim/).
 
 ## Specifiche progetto
 
