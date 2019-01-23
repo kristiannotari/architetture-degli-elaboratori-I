@@ -1,11 +1,5 @@
 # Progetto Architetture degli Elaboratori
 
-```
-Nome e cognome: NOTARI KRISTIAN
-Matricola:      892708
-Email:          kristian.notari@studenti.unimi.it
-````
-
 ## Specifiche progetto
 
 ### Descrizione generale progetto
